@@ -26,14 +26,19 @@ func _physics_process(delta: float) -> void:
 func _on_Wall_body_entered(body) -> void:
 	if body.is_in_group("Entity"):
 		if body.has_method("die"):
-			body.die()
+			if body.alive:
+				body.die()
 
 
 func _on_ScoreArea_body_exited(body) -> void:
 	if body.is_in_group("Entity"):
-		# play the scoring sound
-		point.play()
-		# flag the obstacle as passed
-		passed = true
-		# emit the signal for the player having scored
-		emit_signal("player_scored")
+		if body.alive:
+			# play the scoring sound
+			point.play()
+			# flag the obstacle as passed
+			passed = true
+			# emit the signal for the player having scored
+			emit_signal("player_scored")
+			# if it is a player reinforce it
+			if body.has_method("calculate_fitness"):
+				body.calculate_fitness(20)

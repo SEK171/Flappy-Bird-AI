@@ -9,12 +9,16 @@ var benchmark_fitness: float
 var benchmark_brain: Network
 var best: AI
 
+# the staleness meter for non progression of the species
+var trashometer: int = 0
+
 
 func _init(ai: AI) -> void:
 	ais.append(ai)
 	benchmark_fitness = ai.fitness
 	benchmark_brain = ai.brain.clone()
-	best = ai.clone()
+	best = ai.clone(false)
+	best.visible = false
 
 
 # custom sorter for species by fitness
@@ -25,7 +29,7 @@ static func sort_descending_fitness(s1, s2) -> bool:
 
 
 func similarity(brain: Network) -> bool:
-	var similarity = weight_difference(benchmark_brain, brain)
+	var similarity: float = weight_difference(benchmark_brain, brain)
 	return threshold > similarity
 
 
@@ -47,8 +51,12 @@ func add_to_species(ai: AI) -> void:
 func sort_ais_by_fitness() -> void:
 	ais.sort_custom(AI, "sort_descending_fitness")
 	if ais[0].fitness > benchmark_fitness:
+		trashometer = 0
 		benchmark_fitness = ais[0].fitness
-		best = ais[0].clone()
+		best = ais[0].clone(false)
+		best.visible = false
+	else:
+		trashometer += 1
 
 
 func calculate_average_fitness() -> void:

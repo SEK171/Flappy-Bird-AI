@@ -64,10 +64,12 @@ func spawn_ai(size: int) -> void:
 
 
 func ai_death() -> void:
+	print(entities_alive)
 	# check if we have gone extinct yet
 	if entities_alive > 1:
 		entities_alive -= 1
 	else:
+		entities_alive -= 1
 		emit_signal("extinct")
 
 
@@ -83,11 +85,42 @@ func natural_selection() -> void:
 	print("fitness time")
 	calculate_fitness()
 	
+	print("kill the extinct fellows")
+	kill_extinct_species()
+	
+	print("kill useless species")
+	kill_useless_species()
+	
 	print("species sorting time")
 	sort_species_by_fitness()
 	
 	print("creating children of the new gen")
 	next_generation()
+
+
+func kill_useless_species() -> void:
+	var trash_species: Array = []
+	for s in species:
+		if s.trashometer >= 8:
+			if species.size() > trash_species.size() + 1:
+				trash_species.append(s)
+				for ai in s.ais:
+					self.ais.erase(ai)
+					ai.queue_free()
+			else:
+				s.trashometer = 0
+	for s in trash_species:
+		self.species.erase(s)
+		s.queue_free()
+
+
+func kill_extinct_species() -> void:
+	# remove useless and redundant species
+	for s in species:
+		if s.ais.size() == 0:
+			print("removing redundant specie")
+			species.erase(s)
+			s.queue_free()
 
 
 func kill_old_generation():
@@ -122,6 +155,7 @@ func calculate_fitness() -> void:
 
 
 func sort_species_by_fitness() -> void:
+	
 	# sort the ais in each species by fitness
 	for s in species:
 		s.sort_ais_by_fitness()
@@ -158,31 +192,14 @@ func next_generation() -> void:
 	# create the next generation of ais
 	ais = []
 	for child in children:
-		add_child(child)
-		child.position.x = 115
-		child.position.y = 427
-		child.connect("died", self, "ai_death")
-		child.start()
+#		add_child(child)
+#		child.position.x = 115
+#		child.position.y = 427
+#		child.connect("died", self, "ai_death")
+#		child.start()
 		ais.append(child)
+		entities_alive += 1
 	generation += 1
-	# don't forget the number of living birds update burh..
-	entities_alive = population_size
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

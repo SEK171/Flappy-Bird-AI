@@ -23,7 +23,7 @@ func _init(given_id) -> void:
 func activate() -> void:
 	# if the layer last layer pass it through sigmoid to get the output
 	if layer == 1:
-		output = sigmoid(input)
+		output = sigmoid(input)	
 	# if first layer then accumelate the linear activation of each neuron/node
 	for i in range(connections.size()):
 		connections[i].destination_node.input += connections[i].weight * output

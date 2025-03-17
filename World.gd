@@ -96,7 +96,7 @@ func new_simulation() -> void:
 	self.score = 0
 	# set the ai switch to true
 	obstacle_spawner.start()
-	population.spawn_ai(10)
+	population.spawn_ai(25)
 
 
 

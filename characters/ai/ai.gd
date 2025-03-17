@@ -26,18 +26,21 @@ const GRAVITY: float = 10.0
 # boolean check for starting the game
 var started: bool = false
 # check for if the player is alive
-var alive: bool = true
+var alive: bool = false
 
 # AI related parameters -------------------------------------------------------
 
 # the threshold for making a decision
-const threshold: float = 0.73
+const threshold: float = 0.69 # nice
 
 # the decision variable
 var decision: float
 
 # the vision of the birdie ( bottom pipe, middle, top pipe )
 var vision: Array = [0.5, 1, 0.5]
+
+# the normalization factor for the vision
+var norm_factor: float = 300
 
 # the number of inputs/perceptors
 var inputs: int = 3
@@ -51,6 +54,9 @@ var fitness: float = 0
 # the lifespan of the current ai
 var lifespan: float = 0
 
+# a bonus fitness score to speed up learning process
+var bonus: float = 0
+
 
 # -----------------------------------------------------------------------------
 
@@ -60,9 +66,6 @@ func _physics_process(_delta: float) -> void:
 	if alive:
 		look()
 		think()
-	
-	if Input.is_action_just_pressed("flap") and alive:
-		flap()
 	
 	# check so that the player does not spin
 	if rotation_degrees <= MAX_ROTATION_DEGREES:
@@ -121,6 +124,10 @@ func die() -> void:
 	hit.play()
 	emit_signal("died")
 	self.visible = false
+	
+	calculate_fitness(-20)
+	
+	
 
 
 
@@ -148,7 +155,7 @@ func look() -> void:
 		var d: float = 75 # distance from center of pipe to one end
 		
 		# vision vector of the bottom pipe
-		vision[0] = max(0, -(global_position.y - obstacle.global_position.y + d)) / 400
+		vision[0] = max(0, -(global_position.y - obstacle.global_position.y + d)) / norm_factor
 
 		
 #		# draw a line to simulate the vision
@@ -157,7 +164,7 @@ func look() -> void:
 #					Color.red)
 		
 		# vision vector of the center/mid of the obstacle
-		vision[1] = max(0, obstacle.global_position.x - global_position.x) / 400
+		vision[1] = max(0, obstacle.global_position.x - global_position.x) / norm_factor
 		
 #		# draw a line to simulate the vision
 #		draw_line(Vector2.ZERO,
@@ -165,7 +172,7 @@ func look() -> void:
 #					Color.red)
 		
 		# vision vector of the bottom pipe
-		vision[2] = max(0, -(global_position.y - obstacle.global_position.y - d)) / 400
+		vision[2] = max(0, -(global_position.y - obstacle.global_position.y - d)) / norm_factor
 		
 #		# draw a line to simulate the vision
 #		draw_line(Vector2.ZERO,
@@ -179,7 +186,7 @@ func look() -> void:
 # the ai action key
 func think() -> void:
 	decision = brain.feed_forward(vision)
-
+	
 	if decision > threshold:
 		flap()
 
@@ -187,20 +194,17 @@ func think() -> void:
 
 # custom sorter for species by fitness
 static func sort_descending_fitness(ai1, ai2) -> bool:
-	print("custom sorting ensues")
-	print(ai1.fitness)
-	print(ai2.fitness)
 	if ai1.fitness > ai2.fitness:
-		print("here we are")
 		return true
 	return false
 
 
-func calculate_fitness() -> void:
-	fitness = lifespan
+func calculate_fitness(bonus_fitness: float = 0) -> void:
+	self.bonus += bonus_fitness
+	self.fitness = self.lifespan + self.bonus
 
 
-func clone() -> AI:
+func clone(ingame: bool = true) -> AI:
 	# get a refrence to the ai resource
 
 	var Population = get_node("/root/World/Population")
@@ -209,15 +213,17 @@ func clone() -> AI:
 	
 	Population.add_child(clone)
 	
-	clone.position.x = 115
-	clone.position.y = 427
-	clone.connect("died", self, "ai_death")
-	
 	
 	clone.fitness = self.fitness
 	clone.brain = self.brain.clone()
 	
-	clone.start()
+	
+	if ingame:
+		clone.position.x = 115
+		clone.position.y = 427
+		clone.connect("died", Population, "ai_death")
+		
+		clone.start()
 	
 	return clone
 

@@ -23,6 +23,7 @@ func mutate_weight() -> void:
 		var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 		weight += rng.randfn(0, 1) / 10
 		
+		# clip to boundaries
 		if weight > 1:
 			weight = 1
 		if weight < -1:
@@ -30,7 +31,7 @@ func mutate_weight() -> void:
 
 
 func clone(given_source_node: Neuron, given_destination_node: Neuron) -> Connection:
-	var clone: Connection = get_script().new(source_node, destination_node, weight)
+	var clone: Connection = get_script().new(given_source_node, given_destination_node, weight)
 	return clone
 
 
